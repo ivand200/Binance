@@ -4,6 +4,7 @@ from api import API_KEY, SECRET_KEY
 import json
 from database import connection
 from datetime import datetime, timezone
+import time
 
 async def main():
     client = await AsyncClient.create(API_KEY, SECRET_KEY)
@@ -11,6 +12,7 @@ async def main():
     ms = bm.multiplex_socket(['btcusdt@bookTicker'])  # 'btcusdt@depth5'
     async with ms as tscm:
         while True:
+            time.sleep(1)
             res = await tscm.recv()
             cursor = connection.cursor()
             dt = datetime.now(timezone.utc)
@@ -18,9 +20,11 @@ async def main():
             to_insert = (dt, res["data"]["b"], res["data"]["a"])
             cursor.execute(query, to_insert)
             connection.commit()
-            print(res['data']['b'], res['data']['a'], dt)
+            print(dt, res['data']['b'], res['data']['a'])
 
     await client.close_connection()
+    cursor.close()
+    connection.close()
 
 if __name__ == "__main__":
 
